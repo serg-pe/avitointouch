@@ -1,5 +1,7 @@
-from typing import List
+from typing import List, Dict
 import re
+from urllib import parse
+from urllib.parse import urlparse, urlencode, parse_qs, urlunparse
 
 import requests
 
@@ -55,6 +57,15 @@ class AvitoScraper(object):
         pages_quantity = int(pages_quantity[0])
         return pages_quantity
 
+    def _add_query_params(self, url: str, params: Dict[str, str]) -> str:
+        parsed_url = urlparse(url)
+        query_params = parse_qs(parsed_url.query)
+        query_params.update(params)
+        parsed_url = list(parsed_url)
+        parsed_url[4] = urlencode(query_params)
+        url = urlunparse(parsed_url)
+        return url
+
     def scrap_advertisements(self, url: str) -> List[Advertisement]:
         """Scraps ADs from single web page.
 
@@ -76,7 +87,28 @@ class AvitoScraper(object):
             ad_specific_params = ad.find('div', attrs={'data-marker': 'item-specific-params'}).text
             advertisement = Advertisement(ad_url, ad_title, ad_price, ad_specific_params)
             advertisements.append(advertisement)
-        
+
         return advertisements
 
-    
+    def laod_all_pages(self, url: str) -> List[Page]:
+        """Loads all pages.
+
+        Args:
+            url (str): start url for section
+
+        Returns:
+            List[Page]: loaded pages to parse.
+        """
+
+        loaded_pages = []
+
+        base_page = self.load_page(url)
+        loaded_pages.append(base_page)
+
+        pages_quantity = self.count_pages(base_page)
+        for page_index in range(2, pages_quantity + 1):    
+            url_with_page_index = self._add_query_params(url, {'p': f'{page_index}'})
+            page = self.load_page(url_with_page_index)
+            loaded_pages.append(page)
+        
+        return loaded_pages
