@@ -57,7 +57,7 @@ class AvitoScraper(object):
         pages_quantity = int(pages_quantity[0])
         return pages_quantity
 
-    def _add_query_params(self, url: str, params: Dict[str, str]) -> str:
+    def add_query_params(self, url: str, params: Dict[str, str]) -> str:
         parsed_url = urlparse(url)
         query_params = parse_qs(parsed_url.query)
         query_params.update(params)
@@ -90,7 +90,7 @@ class AvitoScraper(object):
 
         return advertisements
 
-    def laod_all_pages(self, url: str) -> List[Page]:
+    def load_all_pages(self, url: str) -> List[Page]:
         """Loads all pages.
 
         Args:
