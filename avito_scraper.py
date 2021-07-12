@@ -1,4 +1,4 @@
-from typing import List, Dict
+from typing import List, Dict, Tuple
 import re
 from urllib import parse
 from urllib.parse import urlparse, urlencode, parse_qs, urlunparse
@@ -85,7 +85,7 @@ class AvitoScraper(object):
             ad_title = link.find('h3').text
             ad_price = ad.find('meta', attrs={'itemprop': 'price'})['content']
             ad_specific_params = ad.find('div', attrs={'data-marker': 'item-specific-params'}).text
-            advertisement = Advertisement(ad_url, ad_title, ad_price, ad_specific_params)
+            advertisement = Advertisement(title=ad_title, price=ad_price, specific_params=ad_specific_params, url=ad_url)
             advertisements.append(advertisement)
 
         return advertisements
@@ -112,3 +112,26 @@ class AvitoScraper(object):
             loaded_pages.append(page)
         
         return loaded_pages
+
+    def scrap_section(self, section_url: str, pages_quantity: int) -> Tuple[Advertisement]:
+        """Scraps advertisements from given number of section's pages.
+
+        Args:
+            section_url (str): observerved section URL
+            pages_quantity (int): quantity of parsed pages from section
+
+        Returns:
+            Tuple[Advertisement]: tuple of scraped advertisements.
+        """
+
+        first_page = self.load_page(section_url)
+        all_pages_quantity = self.count_pages(first_page)
+        if pages_quantity > all_pages_quantity:
+            pages_quantity = all_pages_quantity
+
+        advertisements = []
+        for page_index in range(1, pages_quantity + 1):
+            page_indexed_url = self.add_query_params(section_url, {'p': f'{page_index}'})
+            advertisements += self.scrap_advertisements(page_indexed_url)
+
+        return tuple(advertisements)
