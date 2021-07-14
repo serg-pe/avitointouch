@@ -80,6 +80,14 @@ class AvitoScraper(object):
         return url
 
     def _match_month_index(self, month: str):
+        """Generates month index by its name, starting with 1.
+
+        Args:
+            month (str): month name
+
+        Returns:
+            [type]: month index.
+        """
         months = (
             'январ', 
             'феврал', 
@@ -94,17 +102,42 @@ class AvitoScraper(object):
             'декабр',
         )
 
-        for month_index, month_name in enumerate(months):
+        for month_index, month_name in enumerate(months, start=1):
             if re.search(month_name, month):
                 return month_index
 
+    def _parse_date_time(self, ad_date: str) -> datetime:
+        """Parses date with template 'dd month_name hh:mm'.
+
+        Args:
+            ad_date (str): Avito's date representation
+
+        Returns:
+            datetime: Python's datetime representation.
+        """
+        date = datetime.now()
+        day = re.findall(r'\d+', ad_date)[0]
+        month_name = re.findall(r'[а-яА-Я]+', ad_date)[0]
+        time = re.findall(r'(\d+:\d+)', ad_date)[0]
+        hour, minute = time.split(':')
+        month_index = self._match_month_index(month_name)
+        date = date.replace(month=month_index, day=int(day), hour=int(hour), minute=int(minute))
+        return date
     
     def _text_to_date(self, ad_date: str) -> datetime:
+        """Parses Avito's section page advertisement posting time representation to datetime format.
+
+        Args:
+            ad_date (str): Avito's date representation
+
+        Returns:
+            datetime: Python's datetime representation.
+        """
         date = datetime.now()
-        if re.match(r'секунд'):
+        if re.search(r'секунд', ad_date):
             return date
 
-        time_scalar = int(re.findall(r'\d+')[0])
+        time_scalar = int(re.findall(r'\d+', ad_date)[0])
         if re.search(r'минут', ad_date):
             date -= timedelta(minutes=time_scalar)
         elif re.search(r'час', ad_date):
@@ -114,18 +147,18 @@ class AvitoScraper(object):
         elif re.search(r'недел', ad_date):
             date -= timedelta(weeks=time_scalar)
         else:
-            month_day = re.findall('\d', ad_date)
-            month_name = re.findall()
-            month_index = self._match_month_index()
+            date = self._parse_date_time(ad_date)
+        
+        return date
 
-    def scrap_page(self, url: str) -> List[Advertisement]:
+    def scrap_page(self, url: str) -> Tuple[Advertisement]:
         """Scraps ADs from single web page.
 
         Args:
             url (str): web page URL
 
         Returns:
-            List[Advertisement]: ADs list.
+            Tuple[Advertisement]: ADs list.
         """
 
         advertisements = []
@@ -137,12 +170,12 @@ class AvitoScraper(object):
             ad_title = link.find('h3').text
             ad_price = ad.find('meta', attrs={'itemprop': 'price'})['content']
             ad_specific_params = ad.find('div', attrs={'data-marker': 'item-specific-params'}).text
-            ad_date = ad.find('div', attrs={'data-marker': 'item-date'})
-            ad_date = 
-            advertisement = Advertisement(title=ad_title, price=ad_price, specific_params=ad_specific_params, url=ad_url)
+            ad_date = ad.find('div', attrs={'data-marker': 'item-date'}).text
+            ad_date = self._text_to_date(ad_date)
+            advertisement = Advertisement(title=ad_title, price=ad_price, specific_params=ad_specific_params, url=ad_url, date=ad_date)
             advertisements.append(advertisement)
 
-        return advertisements
+        return tuple(advertisements)
 
     def load_all_pages(self, url: str) -> List[Page]:
         """Loads all pages.
