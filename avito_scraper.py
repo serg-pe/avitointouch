@@ -79,14 +79,14 @@ class AvitoScraper(object):
         url = urlunparse(parsed_url)
         return url
 
-    def _match_month_index(self, month: str):
+    def _match_month_index(self, month: str) -> int:
         """Generates month index by its name, starting with 1.
 
         Args:
             month (str): month name
 
         Returns:
-            [type]: month index.
+            int: month index.
         """
         months = (
             'январ', 
