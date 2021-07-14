@@ -12,15 +12,15 @@ from advertisement import Advertisement
 class AvitoScraper(object):
     """Class for scraping."""
     
-    def __init__(self) -> None:
+    def __init__(self, url: str) -> None:
         headers = {
             'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:89.0) Gecko/20100101 Firefox/89.0',
             'Accept-Language': 'ru'
         }
 
         self._session = requests.Session()
-        self._session.headers = headers
-
+        self._session.headers.update(headers)
+        self._session.get(url)
 
     def load_page(self, url: str) -> Page:
         """Loads page by given url.
@@ -31,7 +31,7 @@ class AvitoScraper(object):
         Returns:
             Page: web page structure.
         """
-
+        
         request = self._session.get(url)
         page = Page(url, request.text)
         return page
@@ -58,6 +58,17 @@ class AvitoScraper(object):
         return pages_quantity
 
     def add_query_params(self, url: str, params: Dict[str, str]) -> str:
+        """Updates URL's query parameters.
+        Updates query parameters if similar in URL and params variable.
+
+        Args:
+            url (str): URL to add params
+            params (Dict[str, str]): dictionary of params
+        
+        Reurns:
+            str: URL with added parameters.
+        """
+        
         parsed_url = urlparse(url)
         query_params = parse_qs(parsed_url.query)
         query_params.update(params)
