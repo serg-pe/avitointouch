@@ -2,8 +2,10 @@ from typing import List, Dict, Tuple
 import re
 from urllib import parse
 from urllib.parse import urlparse, urlencode, parse_qs, urlunparse
+from datetime import datetime, timedelta
 
 import requests
+from sqlalchemy.sql.sqltypes import Date
 
 from page import Page
 from advertisement import Advertisement
@@ -77,7 +79,46 @@ class AvitoScraper(object):
         url = urlunparse(parsed_url)
         return url
 
-    def scrap_advertisements(self, url: str) -> List[Advertisement]:
+    def _match_month_index(self, month: str):
+        months = (
+            'январ', 
+            'феврал', 
+            'март', 
+            'апрел', 
+            'ма', 
+            'июн',
+            'июл',
+            'август',
+            'сентябр',
+            'октябр',
+            'декабр',
+        )
+
+        for month_index, month_name in enumerate(months):
+            if re.search(month_name, month):
+                return month_index
+
+    
+    def _text_to_date(self, ad_date: str) -> datetime:
+        date = datetime.now()
+        if re.match(r'секунд'):
+            return date
+
+        time_scalar = int(re.findall(r'\d+')[0])
+        if re.search(r'минут', ad_date):
+            date -= timedelta(minutes=time_scalar)
+        elif re.search(r'час', ad_date):
+            date -= timedelta(hours=time_scalar)
+        elif re.search(r'(день)|(дней)|(дня)', ad_date):
+            date -= timedelta(days=time_scalar)
+        elif re.search(r'недел', ad_date):
+            date -= timedelta(weeks=time_scalar)
+        else:
+            month_day = re.findall('\d', ad_date)
+            month_name = re.findall()
+            month_index = self._match_month_index()
+
+    def scrap_page(self, url: str) -> List[Advertisement]:
         """Scraps ADs from single web page.
 
         Args:
@@ -96,6 +137,8 @@ class AvitoScraper(object):
             ad_title = link.find('h3').text
             ad_price = ad.find('meta', attrs={'itemprop': 'price'})['content']
             ad_specific_params = ad.find('div', attrs={'data-marker': 'item-specific-params'}).text
+            ad_date = ad.find('div', attrs={'data-marker': 'item-date'})
+            ad_date = 
             advertisement = Advertisement(title=ad_title, price=ad_price, specific_params=ad_specific_params, url=ad_url)
             advertisements.append(advertisement)
 
@@ -143,6 +186,6 @@ class AvitoScraper(object):
         advertisements = []
         for page_index in range(1, pages_quantity + 1):
             page_indexed_url = self.add_query_params(section_url, {'p': f'{page_index}'})
-            advertisements += self.scrap_advertisements(page_indexed_url)
+            advertisements += self.scrap_page(page_indexed_url)
 
         return tuple(advertisements)
