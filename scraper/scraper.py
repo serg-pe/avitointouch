@@ -3,7 +3,7 @@ from abc import  ABC, abstractmethod
 
 import requests
 
-from models.advertisement import Advertisement
+from models.models import Advertisement
 
 
 class Scraper(ABC):

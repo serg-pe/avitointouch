@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 import bs4
 
 from scraper.scraper import Scraper
-from models.advertisement import Advertisement
+from models.models import Advertisement
 
 
 class AvitoScraper(Scraper):
