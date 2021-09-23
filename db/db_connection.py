@@ -1,7 +1,9 @@
+from os import getenv
+
 from sqlalchemy import create_engine
 
 
-DB_NAME = 'avitointouch.db'
+DB_NAME = getenv('DB_NAME')
 
 
 def get_connection():
