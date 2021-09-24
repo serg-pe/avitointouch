@@ -1,12 +1,14 @@
 from os import getenv
 
 from sqlalchemy import create_engine
+from sqlalchemy.orm import Session
 
 
 DB_NAME = getenv('DB_NAME')
 
 
-def get_connection():
+def get_session() -> Session:
     engine = create_engine(f'sqlite:///{DB_NAME}')
-    connection = engine.connect()
-    return connection
+    session = Session(engine)
+    return session
+
